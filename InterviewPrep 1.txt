@@ -1,0 +1,2230 @@
+ASP.net core web api
+
+DI(Dependency Injection)
+-Design pattern
+-achieve inversion of control(IoC) btw classes and their dependencies
+- instead of creating class and its dependencies these can be injected by an external component
+
+3 types
+-constructor injection
+-property injection 
+-method injection
+
+constructor injection
+===============
+public interface IEngine
+{
+    void Start();
+}
+
+public class PetrolEngine : IEngine
+{
+    public void Start() => Console.WriteLine("Petrol engine started");
+}
+
+public class Car
+{
+    private readonly IEngine _engine;
+
+    public Car(IEngine engine) // dependency injected here
+    {
+        _engine = engine;
+    }
+
+    public void Start()
+    {
+        _engine.Start();
+    }
+}
+
+
+services.AddScoped<IEngine, PetrolEngine>();
+services.AddScoped<Car>();
+
+Using DI in a controller or service:
+public class HomeController : Controller
+{
+    private readonly Car _car;
+
+    public HomeController(Car car)
+    {
+        _car = car;
+    }
+
+    public IActionResult Index()
+    {
+        _car.Start();
+        return View();
+    }
+}
+Property injection
+===========
+public class Car
+{
+    public IEngine Engine { get; set; } // injected via property
+}
+This is rarely used and not supported directly by built-in .NET DI without manual assignment.
+
+ Method Injection
+public class Car
+{
+    public void Start(IEngine engine)
+    {
+        engine.Start();
+    }
+}
+Used when the dependency is only needed temporarily.
+
+Benefits of DI
+==========
+Loose coupling
+Easier unit testing
+Better maintainability
+Promotes SOLID principles (esp. Dependency Inversion Principle)
+ 
+==============
+What is Dependency Injection?
+A design pattern to pass (inject) dependencies into a class rather than creating them internally.
+
+2. What are the benefits of DI?
+Loose coupling, testability, separation of concerns, maintainability.
+
+3. What is Inversion of Control (IoC)?
+Reversing the control of dependency creation from the class to the framework/container.
+
+4. What is the difference between DI and IoC?
+IoC is the broader principle; DI is one way to achieve IoC.
+
+5. Which DI containers have you used?
+Microsoft.Extensions.DependencyInjection (built-in)
+
+6. What is the difference between Scoped, Singleton, and Transient?
+services.AddTransient<IService, Service>(); // new instance every time
+services.AddScoped<IService, Service>();    // one per HTTP request
+services.AddSingleton<IService, Service>(); // one for whole app lifetime
+
+MiddleWare
+=========
+
+
+ What is Middleware in ASP.NET Core?
+Middleware is a component that handles HTTP requests/responses in the request pipeline.
+
+2. How does middleware differ from filters?
+Middleware works outside of MVC and applies to all HTTP requests.
+
+Filters work within MVC/Web API (e.g., for actions/controllers).
+
+3. What is the difference between Use, Run, and Map?
+Method	Purpose
+Use	Adds middleware and can call next()
+Run	Adds terminal middleware that doesn't call next
+Map	Branches pipeline based on path
+
+csharp
+Copy
+Edit
+app.Use(async (context, next) => {
+    // do something
+    await next();
+});
+
+app.Run(async context => {
+    await context.Response.WriteAsync("End");
+});
+
+app.Map("/admin", adminApp => {
+    adminApp.Run(async context => {
+        await context.Response.WriteAsync("Admin page");
+    });
+});
+4. How to write custom middleware?
+Create a class with a constructor accepting RequestDelegate
+Implement Invoke or InvokeAsync
+Register it with UseMiddleware<T>()
+
+Built-in Middleware Examples
+app.UseRouting()
+app.UseAuthentication()
+app.UseAuthorization()
+app.UseStaticFiles()
+app.UseCors()
+
+
+What is a Delegate?
+A delegate in C# is a type-safe function pointer — it allows you to reference a method with a specific signature.
+
+// Step 1: Declare a delegate
+public delegate int Operation(int a, int b);
+
+// Step 2: Create a method matching the delegate signature
+public class Calculator
+{
+    public int Add(int x, int y) => x + y;
+}
+
+// Step 3: Use the delegate
+var calc = new Calculator();
+Operation op = calc.Add;
+Console.WriteLine(op(3, 4)); // Output: 7
+
+Multicast Delegate (Chaining Methods)
+Delegates can hold multiple methods (if return type is void):
+public delegate void Notify();
+
+public class Notification
+{
+    public void Email() => Console.WriteLine("Email sent");
+    public void SMS() => Console.WriteLine("SMS sent");
+}
+
+// Usage
+var notify = new Notification();
+Notify del = notify.Email;
+del += notify.SMS;
+
+del(); // Output: Email sent \n SMS sent
+
+Anonymous Methods & Lambda Expressions
+Operation op = delegate(int a, int b) { return a + b; };
+
+// Lambda expression (preferred way)
+Operation op2 = (a, b) => a + b;
+Console.WriteLine(op2(2, 3)); // Output: 5
+
+
+Built-in Generic Delegates
+Action (no return value)
+Action<string> greet = name => Console.WriteLine($"Hello, {name}");
+greet("Alice"); // Hello, Alice
+
+Func (returns a value)
+Func<int, int, int> multiply = (x, y) => x * y;
+Console.WriteLine(multiply(3, 4)); // 12
+
+Predicate (returns bool)
+Predicate<int> isEven = x => x % 2 == 0;
+Console.WriteLine(isEven(4)); // true
+
+
+1. What is a delegate in C#?
+A delegate is a type-safe object used to reference methods with a specific signature.
+
+2. Why use delegates?
+For event handling
+
+To pass methods as parameters
+
+To support callback mechanisms
+
+s3. What’s the difference between delegate, Action, Func, and Predicate?
+Type	Return Value	Parameters	Example
+Delegate	Custom	Custom	public delegate int Op(int, int)
+Action	void	Yes	Action<int>
+Func	Yes	Yes	Func<int, int, int>
+Predicate	bool	One param	Predicate<string>
+
+4. What is a multicast delegate?
+A delegate that holds multiple methods in its invocation list (chained with +=).
+
+5. Where are delegates used in .NET?
+Event handling (Button.Click += Handler)
+LINQ and lambda expressions
+Callbacks and plugin systems
+
+
+Feature	Function	Stored Procedure (SP)
+Returns a value	✅ Yes (must return a value)	❌ Not mandatory
+Use in SELECT statements	✅ Yes	❌ No (generally not allowed)
+Can modify DB (INSERT/UPDATE)	❌ No (not allowed in most cases)	✅ Yes
+Return types	Scalar or Table	Can return 0 or more result sets
+Can use in JOINs	✅ Yes (table-valued functions)	❌ No
+Supports output parameters	❌ No	✅ Yes
+Can use TRY...CATCH	❌ Limited	✅ Yes
+Called using	SELECT dbo.FunctionName(...)	EXEC ProcName or EXECUTE ProcName
+
+
+CREATE FUNCTION dbo.GetFullName(@FirstName NVARCHAR(50), @LastName NVARCHAR(50))
+RETURNS NVARCHAR(101)
+AS
+BEGIN
+    RETURN @FirstName + ' ' + @LastName
+END
+
+SELECT dbo.GetFullName('John', 'Doe') AS FullName;
+
+
+Use Case	Use Function	Use SP
+Need a return value in SELECT	✅	❌
+Need to modify database	❌	✅
+Reusable logic inside queries	✅	❌
+Complex business logic or flow	❌ (limited)	✅
+Returning multiple result sets	❌	✅
+
+What is the key difference between a function and a stored procedure?
+A function must return a value and can be used in a SELECT clause.
+A stored procedure can perform complex operations and doesn't have to return anything.
+
+What are Middleware in ASP.NET Core?
+Middleware are software components in the request pipeline. Each middleware can process requests and pass them to the next one. Examples include authentication, logging, and CORS.
+
+CQRS (Command Query Responsibility Segregation)
+What is the role of MediatR in CQRS in .NET?
+MediatR is a .NET library used to implement in-process messaging. In CQRS:
+It helps decouple the sender and handler of commands and queries.
+It supports a clean architecture by using IMediator.Send(...) to dispatch commands/queries.
+
+MediatR – Decouple command/query sender and handler
+Explanation:
+MediatR-nu oru lightweight library. Idhu namma application-la sender (controller or service) um, handler (actual logic execute pannra place) um connect pannama decouple panna help pannum.
+Eppadi use pannuvom?
+Namma command or query create pannuvom, and IRequestHandler implement panni handle pannuvom. MediatR automatically correct handler-a call pannum based on request.
+
+FluentValidation – Validate command/query inputs
+Explanation:
+Idhu oru separate validation library. Model or DTO inputs correct-a irukka-nu check panna use pannuvom.
+Namma normal-a [Required], [MaxLength] attributes use pannuvom. But FluentValidation gives better control, reusability.
+
+Entity Framework Core – ORM for writing to the database
+Explanation:
+
+Entity Framework Core (EF Core) is an ORM (Object-Relational Mapper). Idhu namma C# object-a database record-a convert pannum, and vice versa.
+Eppadi use pannuvom?
+DbContext class create pannuvom
+DbSet<User> maadhiri table represent pannuvom
+
+Dapper – Lightweight and fast data access for queries
+Explanation:
+Dapper oru micro ORM. EF Core-oda full ORM functionalities vendaama, just fast SQL access venumna Dapper best.
+using (var connection = new SqlConnection(connectionString))
+{
+    var users = await connection.QueryAsync<User>("SELECT * FROM Users");
+}
+
+AutoMapper – Maps entities to DTOs and vice versa
+Explanation:
+AutoMapper use pannuvom entity and DTO (Data Transfer Object) matha automate pannurathukku.
+Manually map panradha vida, AutoMapper-la one-time mapping rule define pannuvom.
+
+
+
+.NET Framework
+Old traditional full framework.
+Windows OS-ku mattum support.
+Latest version: .NET Framework 4.8.1
+Used in: WinForms, WPF (classic), ASP.NET Web Forms, ASP.NET MVC (old
+
+NET (Core onwards)
+Cross-platform (Windows, Linux, macOS)
+Lightweight, modern, fast.
+Unified platform from .NET Core → .NET 5 → .NET 6 → 7 → 8
+.NET 8	2023	✅	Nov 2026	LTS, Native AOT, Blazor full stack
+
+### .NET Full Stack Developer Interview Questions and Answers
+
+#### C# / .NET Core
+
+1. **Difference between IEnumerable, IQueryable, List, and Array:**
+   * `IEnumerable`: Forward-only cursor, LINQ to Objects, executed in memory.
+   * `IQueryable`: Supports remote query execution (like SQL Server), deferred execution.
+   * `List<T>`: In-memory collection with indexing.
+   * `Array`: Fixed-size collection of elements.
+2. **SOLID Principles:**
+   * **S**: Single Responsibility
+   * **O**: Open/Closed
+   * **L**: Liskov Substitution
+   * **I**: Interface Segregation
+   * **D**: Dependency Inversion
+3. **Dependency Injection (DI):**
+   * DI injects dependencies instead of creating them inside the class.
+   * Implemented via constructor injection in .NET Core.
+4. **Value vs Reference Types:**
+   * Value types store data directly (int, float, struct).
+   * Reference types store a reference to the data (class, string, array).
+5. **async/await vs Task vs Thread:**
+   * `async/await`: Asynchronous programming model.
+   * `Task`: Represents an asynchronous operation.
+   * `Thread`: Low-level, consumes more resources.
+
+6. **IDisposable and using:**
+   * IDisposable releases unmanaged resources.
+   * `using` statement ensures `Dispose()` is called.
+7. **Delegates vs Func vs Action:**
+   * Delegate: Custom method pointer.
+   * Func: Returns value, accepts parameters.
+   * Action: No return value.
+8. **Abstract Class vs Interface:**
+   * Abstract: Can have implementation.
+   * Interface: Only method signatures.
+9. **Records in C# 9+:**
+   * Immutable reference types, great for DTOs.
+10. **ref vs out vs in:**
+* `ref`: Must be initialized before passing.
+* `out`: Must be assigned inside method.
+* `in`: Passed by reference, but read-only.
+#### Entity Framework Core
+
+1. **DbContext vs DbSet:**
+   * `DbContext`: Session with DB.
+   * `DbSet<T>`: Table representation.
+2. **Add vs AddRange vs Attach vs Update:**
+   * `Add`: Adds new.
+   * `AddRange`: Adds multiple.
+   * `Attach`: Track existing entity.
+   * `Update`: Marks as modified.
+3. **Code First vs DB First:**
+   * Code First: Write C# first, generate DB.
+   * DB First: Start with DB, generate C# models.
+4. **Migrations:**
+   * Track DB changes via `Add-Migration` and `Update-Database`.
+5. **Lazy vs Eager Loading:**
+   * Lazy: Load when accessed
+   * Eager: Load with query using `Include()`.
+6. **Soft Delete:**
+   * Use a `IsDeleted` flag and filter in `OnModelCreating`.
+#### ASP.NET Core / Web API
+1. **Middleware:**
+   * Request pipeline components (logging, auth, etc.).
+2. **Filters:**
+   * ActionFilter, ResultFilter, ExceptionFilter to process logic at specific stages.
+3. **\[FromQuery], \[FromRoute], \[FromBody], \[FromForm]:**
+   * Bind parameters from different sources.
+4. **Model Binding & Validation:**
+   * Automatic binding and data validation using attributes.
+5. **API Versioning:**
+   * Use URL, header, or query string.
+6. **JWT Authentication:**
+   * Secure APIs via token-based authentication.
+7. **Sync vs Async Actions:**
+   * Async avoids thread blocking, better scalability.
+
+
+#### General Full Stack
+1. **CORS:**
+   * Cross-origin requests, allow in .NET via `services.AddCors()`.
+2. **RESTful API:**
+   * CRUD operations using HTTP methods (GET, POST, PUT, DELETE).
+3. **HTTP Request Lifecycle:**
+   * Browser > Server > Controller > Service > DB > Response
+4. **Status Codes:**
+   * 200 OK, 404 Not Found, 500 Server Error, 401 Unauthorized, 403 Forbidden.
+5. **Logging in .NET:**
+   * Use `ILogger` or external libs like Serilog.
+#### SQL & Database
+1. **Normalization:**
+   * Reduce redundancy via 1NF, 2NF, 3NF.
+2. **Joins:**
+   * INNER, LEFT, RIGHT, CROSS to combine tables.
+3. **Indexing:**
+   * Speed up queries, beware of over-indexing.
+4. **SQL Injection Prevention:**
+   * Use parameterized queries or ORM like EF Core.
+5. **Stored Procedure vs Function:**
+   * SP: Can perform actions.
+   * Function: Returns value, no side-effects.
+
+
+Normalization - Normalization is the process of organizing data to minimize redundancy.
+De-Normalization - reverse
+Primary key  - uniqueness, one per table, no null values
+Unique key - uniqueness, null values allowed
+1nf - 
+varchar  - Variable-length string (ASCII).
+nvarchar - Variable-length string (unicode).
+char - Fixed-length string. 
+
+DECLARE @v VARCHAR(10) = 'Test';  -- Stores only 4 bytes
+DECLARE @n NVARCHAR(10) = N'टेस्ट'; -- Unicode support
+DECLARE @c CHAR(10) = 'Test';     -- Pads with spaces
+
+
+cluster index  -  Sorts and stores data rows physically in order.One per table.
+non cluster index - Has a pointer to the actual data row.
+cte - A temporary result set used for recursion or simplifying complex queries.
+trigger - Code that runs automatically in response to DML events.
+sp - Precompiled collection of one or more SQL statements.
+function - Returns a value and is used like an expression.
+transaction - A group of operations executed as a single unit (ACID properties).
+BEGIN TRANSACTION;
+ROllback TRANSACTION
+Commit TRANSACTION
+
+ACID stands for:
+A – Atomicity: All operations in a transaction succeed or none do.
+Example: If money is debited from one account, it must be credited to another.
+C – Consistency: The database remains in a valid state before and after the transaction.
+I – Isolation: Transactions occur independently without interference.
+D – Durability: Once committed, the transaction’s changes are permanent
+
+joins
+sub query 
+wild cards Like operator (%, _)
+
+
+DML (Data Manipulation Language) (SIUD)
+Used to manipulate data inside tables.
+
+Command	Purpose	Example
+SELECT	Read data	SELECT * FROM Employee;
+INSERT	Add data	INSERT INTO Employee(Name) VALUES ('John');
+UPDATE	Modify data	UPDATE Employee SET Name = 'Jane' WHERE ID = 1;
+DELETE	Remove data	DELETE FROM Employee WHERE ID = 1;
+
+DDL (Data Definition Language)(CADT)
+Used to define database schema.
+
+Command	Purpose	Example
+CREATE	Create objects	CREATE TABLE Employee (...);
+ALTER	Modify structure	ALTER TABLE Employee ADD DOB DATE;
+DROP	Delete objects	DROP TABLE Employee;
+TRUNCATE	Remove all data (faster, no rollback)	TRUNCATE TABLE Employee;
+
+DCL (Data Control Language)(GR)
+Used to control access to data.
+
+Command	Purpose	Example
+GRANT	Give permission	GRANT SELECT ON Employee TO User1;
+REVOKE	Take back permission	REVOKE SELECT ON Employee FROM User1;
+
+TCL (Transaction Control Language)
+Used to manage transactions.
+
+Command	Purpose	Example
+BEGIN TRAN	Start transaction	BEGIN TRAN;
+COMMIT	Save changes	COMMIT;
+ROLLBACK	Undo changes	ROLLBACK;
+SAVEPOINT	Create rollback point	SAVE TRAN save1;
+
+ Set Operators
+Combine results from multiple queries:
+UNION: Removes duplicates
+UNION ALL: Keeps duplicates
+INTERSECT: Common rows
+EXCEPT: Rows in 1st but not in 2nd
+
+
+delele duplicates
+==================
+delete from employeeinfo e1, employeeinfo e2
+where e1.employeename = e2.employeeinfo
+and e1.empid > e2.empid
+
+S – Single Responsibility Principle (SRP)
+Definition: A class should have only one reason to change.
+
+✅ Example (Bad):
+csharp
+Copy
+Edit
+public class Report {
+    public void GenerateReport() {
+        // generate report logic
+    }
+
+    public void SaveToFile(string path) {
+        // file save logic
+    }
+}
+Problem: This class handles two responsibilities: report generation and file saving.
+
+✅ Example (Good):
+csharp
+Copy
+Edit
+public class Report {
+    public void GenerateReport() {
+        // generate report
+    }
+}
+
+public class FileManager {
+    public void SaveToFile(string path) {
+        // save logic
+    }
+}
+🔹 O – Open/Closed Principle (OCP)
+Definition: Software entities should be open for extension, but closed for modification.
+
+✅ Example (Bad):
+csharp
+Copy
+Edit
+public class Invoice {
+    public double CalculateDiscount(string customerType) {
+        if (customerType == "Gold") return 0.2;
+        if (customerType == "Silver") return 0.1;
+        return 0.0;
+    }
+}
+Problem: You must modify code to add new customer types.
+
+✅ Example (Good - OCP):
+csharp
+Copy
+Edit
+public interface IDiscount {
+    double GetDiscount();
+}
+
+public class GoldDiscount : IDiscount {
+    public double GetDiscount() => 0.2;
+}
+
+public class SilverDiscount : IDiscount {
+    public double GetDiscount() => 0.1;
+}
+
+public class Invoice {
+    public double CalculateDiscount(IDiscount discount) {
+        return discount.GetDiscount();
+    }
+}
+🔹 L – Liskov Substitution Principle (LSP)
+Definition: Subtypes must be substitutable for their base types without breaking functionality.
+
+✅ Example (Bad):
+csharp
+Copy
+Edit
+public class Bird {
+    public virtual void Fly() {}
+}
+
+public class Ostrich : Bird {
+    public override void Fly() {
+        throw new NotImplementedException();
+    }
+}
+Problem: Ostrich is a bird but cannot fly.
+
+✅ Example (Good - LSP):
+csharp
+Copy
+Edit
+public abstract class Bird {
+    public abstract void Eat();
+}
+
+public interface IFlyingBird {
+    void Fly();
+}
+
+public class Sparrow : Bird, IFlyingBird {
+    public override void Eat() {}
+    public void Fly() {}
+}
+
+public class Ostrich : Bird {
+    public override void Eat() {}
+}
+🔹 I – Interface Segregation Principle (ISP)
+Definition: No client should be forced to depend on methods it does not use.
+
+✅ Example (Bad):
+csharp
+Copy
+Edit
+public interface IWorker {
+    void Work();
+    void Eat();
+}
+
+public class Robot : IWorker {
+    public void Work() {}
+    public void Eat() {
+        throw new NotImplementedException();
+    }
+}
+Problem: Robot doesn’t need Eat()
+
+✅ Example (Good - ISP):
+csharp
+Copy
+Edit
+public interface IWorkable {
+    void Work();
+}
+
+public interface IFeedable {
+    void Eat();
+}
+
+public class Human : IWorkable, IFeedable {
+    public void Work() {}
+    public void Eat() {}
+}
+
+public class Robot : IWorkable {
+    public void Work() {}
+}
+🔹 D – Dependency Inversion Principle (DIP)
+Definition: High-level modules should not depend on low-level modules. Both should depend on abstractions.
+
+✅ Example (Bad):
+csharp
+Copy
+Edit
+public class EmailService {
+    public void SendEmail() {}
+}
+
+public class Notification {
+    private EmailService emailService = new EmailService();
+
+    public void Notify() {
+        emailService.SendEmail();
+    }
+}
+Problem: Notification depends directly on a concrete class.
+
+✅ Example (Good - DIP):
+csharp
+Copy
+Edit
+public interface IMessageService {
+    void SendMessage();
+}
+
+public class EmailService : IMessageService {
+    public void SendMessage() {
+        // send email
+    }
+}
+
+public class Notification {
+    private readonly IMessageService _messageService;
+
+    public Notification(IMessageService messageService) {
+        _messageService = messageService;
+    }
+
+    public void Notify() {
+        _messageService.SendMessage();
+    }
+}
+Now the Notification class depends on an interface, not a specific class.
+
+🔸 Summary Table
+Principle	Description
+SRP	One class = One responsibility
+OCP	Extend behavior without modifying source
+LSP	Derived classes must be substitutable
+ISP	Prefer small, specific interfaces
+DIP	Depend on abstractions, not implementations
+
+
+Factory Pattern
+Creates objects without exposing instantiation logic to the client.
+public interface IAnimal {
+    string Speak();
+}
+
+public class Dog : IAnimal {
+    public string Speak() => "Bark";
+}
+
+public class Cat : IAnimal {
+    public string Speak() => "Meow";
+}
+
+public class AnimalFactory {
+    public static IAnimal GetAnimal(string type) {
+        if (type == "dog") return new Dog();
+        if (type == "cat") return new Cat();
+        throw new ArgumentException("Unknown type");
+    }
+}
+
+What is the Unit of Work Pattern?
+The Unit of Work (UoW) pattern keeps track of everything you do during a business transaction and saves all changes at once. It helps manage multiple repository operations under a single transaction.
+
+🔶 Why Use It With Repository Pattern?
+✅ Coordinates changes across multiple repositories
+✅ Ensures all DB operations commit or rollback together
+✅ Improves consistency and transactional integrity
+✅ Makes unit testing and mocking easier
+
+
+What is the difference between an interface and an abstract class?
+An abstract class provides a base implementation for its derived classes and can contain fields, constructors, and implemented methods.
+An interface defines a contract only – it contains method signatures but no logic (except default implementations in C# 8+).
+A class can inherit only one abstract class, but can implement multiple interfaces.
+
+What Does “Contract” Mean in This Context?
+Think of an interface as a legal agreement (contract) that a class signs — it promises to provide the behavior defined by the interface.
+
+When a class implements an interface, it agrees to:
+Implement all methods
+Implement all properties
+Match the method/property signatures exactly
+Why Is It Called a Contract?
+Because:
+It defines what a class must do (but not how to do it)
+It enforces structure in your code
+
+
+1. Array
+✅ Description:
+Fixed-size collection of elements of the same type.
+
+Stored in contiguous memory.
+
+Index-based access (zero-based).
+
+✅ Example:
+int[] numbers = new int[3];
+numbers[0] = 10;
+numbers[1] = 20;
+numbers[2] = 30;
+
+foreach (int num in numbers)
+    Console.WriteLine(num);
+	
+	
+	
+2. ArrayList
+✅ Description:
+Dynamic-size collection that can hold any type (non-generic).
+
+Internally stores elements as object.
+
+Slower and type-unsafe (requires casting).
+
+✅ Example:
+ArrayList list = new ArrayList();
+list.Add(10);
+list.Add("Hello");
+list.Add(3.14);
+
+foreach (var item in list)
+    Console.WriteLine(item);
+
+
+ List<T>
+✅ Description:
+Generic version of ArrayList.
+Type-safe, resizable array-like structure.
+Provides useful methods like Add, Remove, Contains, Sort, etc.
+List<int> list = new List<int> { 1, 2, 3 };
+list.Add(4);
+list.Remove(2);
+
+foreach (int num in list)
+    Console.WriteLine(num);
+	
+	
+	
+Dictionary<TKey, TValue>
+✅ Description:
+Stores data as key-value pairs.
+
+Fast lookup by key (hash-based).
+
+Keys must be unique.
+
+✅ Example:
+csharp
+Copy
+Edit
+Dictionary<int, string> employees = new Dictionary<int, string>();
+employees.Add(1, "John");
+employees.Add(2, "Jane");
+
+Console.WriteLine(employees[1]); // John
+✅ Use Case:
+When you need to look up data by a unique key (e.g., ID to name mapping).
+
+
+Stack<T>
+✅ Description:
+LIFO (Last In, First Out) structure.
+
+Supports Push, Pop, and Peek.
+
+✅ Example:
+csharp
+Copy
+Edit
+Stack<string> stack = new Stack<string>();
+stack.Push("A");
+stack.Push("B");
+
+Console.WriteLine(stack.Pop());  // B
+Console.WriteLine(stack.Peek()); // A
+✅ Use Case:
+Undo functionality, parsing expressions, backtracking.
+
+6. Queue<T>
+✅ Description:
+FIFO (First In, First Out) structure.
+
+Supports Enqueue, Dequeue, and Peek.
+
+✅ Example:
+csharp
+Copy
+Edit
+Queue<string> queue = new Queue<string>();
+queue.Enqueue("A");
+queue.Enqueue("B");
+
+Console.WriteLine(queue.Dequeue()); // A
+✅ Use Case:
+Print jobs, messaging systems, task scheduling.
+
+
+
+Heap (Priority Queue)
+✅ Description:
+A heap is a binary tree-based structure where the highest (or lowest) priority element is always at the root.
+
+Not natively available in .NET (before .NET 6).
+
+✅ .NET 6+ PriorityQueue Example:
+csharp
+Copy
+Edit
+PriorityQueue<string, int> pq = new PriorityQueue<string, int>();
+pq.Enqueue("Low Priority", 3);
+pq.Enqueue("High Priority", 1);
+pq.Enqueue("Medium Priority", 2);
+
+Console.WriteLine(pq.Dequeue())
+
+
+A Task in C# represents an asynchronous operation. It can be thought of as a promise to complete some work in the future, typically used in multithreaded or I/O-bound operations.
+It’s part of the TPL (Task Parallel Library).
+Found in the System.Threading.Tasks namespace.
+
+
+What is boxing in C#?
+✅ Answer: Boxing is the process of converting a value type into a reference type (object), typically when storing in non-generic collections or passing to methods expecting object.
+
+❓ Q2: What is unboxing?
+✅ Answer: Unboxing is converting a boxed object back to its original value type using explicit casting.
+
+Select max(salary) as SecondHighestSalary from employee where salary < (select max(salary) from employee)
+ 
+Second highest salary 
+ 
+var secondHighestSalary = employee
+    .Where(e => e.Salary < employee.Max(x => x.Salary))
+    .Max(e => e.Salary);
+ 
+in linq
+
+
+public static string ReverseString(string input)
+{
+    char[] chars = input.ToCharArray();
+    Array.Reverse(chars);
+    return new string(chars);
+}
+
+// Usage:
+Console.WriteLine(ReverseString("hello")); // Output: "olleh"
+
+public static bool IsPalindrome(string input)
+{
+    string reversed = new string(input.Reverse().ToArray());
+    return input.Equals(reversed, StringComparison.OrdinalIgnoreCase);
+}
+
+// Usage:
+Console.WriteLine(IsPalindrome("Level")); // Output: True
+
+public static void PrintPrimes(int start, int end)
+{
+    for (int i = start; i <= end; i++)
+    {
+        if (IsPrime(i))
+            Console.Write(i + " ");
+    }
+}
+
+public static bool IsPrime(int num)
+{
+    if (num < 2) return false;
+    for (int i = 2; i <= Math.Sqrt(num); i++)
+        if (num % i == 0) return false;
+    return true;
+}
+
+// Usage:
+PrintPrimes(1, 20); // Output: 2 3 5 7 11 13 17 19
+
+
+public static void PrintFibonacci(int count)
+{
+    int a = 0, b = 1;
+    Console.Write($"{a} {b} ");
+    for (int i = 2; i < count; i++)
+    {
+        int c = a + b;
+        Console.Write($"{c} ");
+        a = b;
+        b = c;
+    }
+}
+
+// Usage:
+PrintFibonacci(10); // Output: 0 1 1 2 3 5 8 13 21 34
+
+public static void Swap(ref int a, ref int b)
+{
+    a = a + b;
+    b = a - b;
+    a = a - b;
+}
+
+// Usage:
+int x = 5, y = 3;
+Swap(ref x, ref y);
+Console.WriteLine($"{x}, {y}"); // Output: 3, 5
+
+Recurssion
+public static int Factorial(int n)
+{
+    if (n == 0) return 1;
+    return n * Factorial(n - 1);
+}
+
+// Usage:
+Console.WriteLine(Factorial(5)); // Output: 120
+
+Iterative Version (Alternative)
+public static int FactorialIterative(int n)
+{
+    int result = 1;
+    for (int i = 2; i <= n; i++)
+    {
+        result *= i;
+    }
+    return result;
+}
+
+Count Character Frequency in a String
+csharp
+Copy
+Edit
+public static void CharFrequency(string input)
+{
+    Dictionary<char, int> freq = new Dictionary<char, int>();
+    foreach (char c in input)
+    {
+        if (freq.ContainsKey(c))
+            freq[c]++;
+        else
+            freq[c] = 1;
+    }
+
+    foreach (var pair in freq)
+        Console.WriteLine($"{pair.Key}: {pair.Value}");
+}
+
+// Usage:
+CharFrequency("hello"); // Output: h:1, e:1, l:2, o:1
+
+ Check if Number is Armstrong
+csharp
+Copy
+Edit
+public static bool IsArmstrong(int num)
+{
+    int original = num;
+    int sum = 0;
+    int digits = num.ToString().Length;
+
+    while (num > 0)
+    {
+        int d = num % 10;
+        sum += (int)Math.Pow(d, digits);
+        num /= 10;
+    }
+
+    return original == sum;
+}
+
+// Usage:
+Console.WriteLine(IsArmstrong(153)); // Output: True
+
+public static void BubbleSort(int[] arr)
+{
+    for (int i = 0; i < arr.Length - 1; i++)
+    {
+        for (int j = 0; j < arr.Length - i - 1; j++)
+        {
+            if (arr[j] > arr[j + 1])
+            {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+    Console.WriteLine(string.Join(", ", arr));
+}
+
+// Usage:
+BubbleSort(new int[] { 5, 3, 8, 1 });
+
+
+public static void Calculator(int a, int b, char op)
+{
+    switch (op)
+    {
+        case '+': Console.WriteLine(a + b); break;
+        case '-': Console.WriteLine(a - b); break;
+        case '*': Console.WriteLine(a * b); break;
+        case '/': Console.WriteLine(b != 0 ? a / b : "Divide by 0"); break;
+        default: Console.WriteLine("Invalid operator"); break;
+    }
+}
+
+// Usage:
+Calculator(10, 5, '+'); // Output: 15
+
+
+public static string ReverseString(string input)
+{
+    char[] reversed = new char[input.Length];
+
+    for (int i = 0; i < input.Length; i++)
+    {
+        reversed[i] = input[input.Length - 1 - i];
+    }
+
+    return new string(reversed);
+}
+
+// Usage:
+Console.WriteLine(ReverseString("hello")); // Output: "olleh"
+
+
+public static string ReverseString(string input)
+{
+    string reversed = string.Empty;
+    for (int i = input.Length - 1; i >= 0; i--)
+    {
+        reversed += input[i];
+    }
+    return reversed;
+}
+
+public static string ReverseStringLinq(string input)
+{
+    string reversed = string.Empty;
+    reversed = new string(input.Reverse().ToArray());
+    return reversed;
+}
+
+match combination
+------------------
+select 
+CONCAT(t1.team_name ,'vs', t2.team_name) as uniquecombination
+from teams t1
+join teams t2
+on t1.team_name < t2.team_name
+order by uniquecombination
+
+
+swap the orderid 
+-----------------
+select * from orders
+;with ordercount as 
+(
+select count(id) as totalorder from orders
+)
+select 
+case 
+when id % 2 <> 0 and id <> totalorder
+then id + 1
+when id % 2 <> 0 and id = totalorder
+then id 
+else id - 1
+end as correct_id,item
+from orders a cross join ordercount b
+order by correct_id
+
+get the nth salary
+--------------------
+select * from EmployeeDetails
+order by Salary desc
+declare @n int
+select @n = 4
+SELECT DISTINCT Salary
+FROM EmployeeDetails
+ORDER BY Salary DESC
+OFFSET @n-1 ROWS FETCH NEXT 1 ROWS ONLY; if not working use LIMIT 1 OFFSET 2;
+
+
+A constructor is a special method in a class that initializes an object when it is created.
+It has the same name as the class.
+It does not return a value (not even void).
+It is called automatically when an object is created.
+
+Static Constructor - This runs only once, before any instance of the class is created or any static members are accessed.
+Instance Constructor - Runs every time an instance is created.
+
+| Question                                | Answer                                                                                                         |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **What is a constructor?**              | A method that runs when an object is created.                                                                  |
+| **Why use constructors?**               | To initialize fields or perform setup work.                                                                    |
+| **How to identify constructor type?**   | Look for `static` keyword. `static ClassName()` is static constructor. No `static` means instance constructor. |
+| **Which constructor runs first?**       | Static constructor runs once before any object or static member is accessed.                                   |
+
+| Constructor Type                    | When It's Called                                                                             | Purpose                          | Syntax                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------- |
+| **Instance Constructor**            | When you create an object with `new`                                                         | Initializes instance-level data  | `public ClassName()`                |
+| **Static Constructor**              | When the class is accessed for the first time (before any instance or static member is used) | Initializes static data          | `static ClassName()`                |
+| **Parameterized Constructor**       | When arguments are passed                                                                    | Initializes with specific values | `public ClassName(int x)`           |
+| **Private Constructor**             | Prevents object creation (used in singletons)                                                | Restricts instantiation          | `private ClassName()`               |
+| **Copy Constructor** (manual in C#) | Copies data from another object                                                              | Cloning-like behavior            | `public ClassName(ClassName other)` |
+
+
+What is the output of the program below?
+public void Main(string[] args)
+{
+TestStatic t = new TestStatic();
+t.Print();
+}
+
+public class TestStatic
+{
+public static int TestValue;
+ 
+public TestStatic()
+{
+if (TestValue == 0)
+{
+TestValue = 5;
+}
+}
+static TestStatic()
+{
+if (TestValue == 0)
+{
+TestValue = 10;
+}
+ 
+}
+ 
+public void Print()
+{
+if (TestValue == 5)
+{
+TestValue = 6;
+}
+Console.WriteLine("TestValue : " + TestValue);
+}
+}
+
+"TestValue : 10"
+
+In C#, both var and dynamic allow you to declare variables without explicitly specifying the type, but they serve very different purposes and behave differently at compile time vs runtime.
+
+var (Implicitly Typed Variable)
+Type is determined at compile time
+Once assigned, the type cannot change
+You must assign a value at the time of declaration
+var number = 10;         // int
+var name = "John";       // string
+
+// Compiler error:
+// number = "hello";     // Cannot assign string to int
+Advantages
+===========
+Type safety
+IntelliSense and compile-time checking
+Useful for anonymous types or LINQ
+
+dynamic
+Type is resolved at runtime
+Compiler does not check type safety
+You can assign different types to the same variable
+Risks
+=========
+No IntelliSense or compile-time checking
+Runtime exceptions if operations are invalid
+dynamic data = 10;       // int at runtime
+data = "hello";          // now string at runtime
+data = new { Name = "Tom", Age = 30 };  // anonymous type
+
+
+Attribute Routing (Modern and Recommended)
+You decorate controllers and actions with [Route] and HTTP method attributes ([HttpGet], [HttpPost], etc.).
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
+{
+    [HttpGet]                     // GET api/products
+    public IActionResult GetAll() => Ok("All products");
+
+    [HttpGet("{id:int}")]         // GET api/products/5
+    public IActionResult GetById(int id) => Ok($"Product {id}");
+
+    [HttpPost]                    // POST api/products
+    public IActionResult Create([FromBody] Product product) => Ok("Product created");
+}
+
+ Conventional Routing (Less Common in Web API)
+You define routes globally (e.g., in Program.cs or Startup.cs):
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "api/{controller=Home}/{action=Index}/{id?}");
+	
+	
+In ASP.NET Core, a middleware component is a building block in the HTTP request pipeline that can:
+
+Handle requests
+Modify requests/responses
+Call the next middleware in the pipeline (or short-circuit it)
+Middleware runs in order, and each component can do work before and/or after the next one executes.
+
+Custom Middleware Class
+csharp
+Copy
+Edit
+public class LoggingMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public LoggingMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        Console.WriteLine($"[Request] {context.Request.Method} {context.Request.Path}");
+
+        await _next(context); // Call the next middleware
+
+        Console.WriteLine($"[Response] {context.Response.StatusCode}");
+    }
+}
+
+
+Register in Pipeline (Program.cs or Startup.cs)
+csharp
+Copy
+Edit
+var app = builder.Build();
+
+// Add custom middleware
+app.UseMiddleware<LoggingMiddleware>();
+
+// Example built-in middleware
+app.UseRouting();
+app.UseAuthorization();
+app.MapControllers();
+
+
+In ASP.NET Core, middleware components can be classified by purpose or implementation style. Middleware is a central concept in ASP.NET Core's request pipeline, and different types serve different roles.
+
+✅ Types of Middleware Components
+1. Built-in Middleware
+ASP.NET Core provides a wide set of predefined middleware components.
+
+Middleware	Purpose
+UseRouting	Matches the incoming request to a route
+UseAuthentication	Handles user authentication
+UseAuthorization	Enforces access control policies
+UseStaticFiles	Serves static files (e.g., HTML, CSS, JS, images)
+UseCors	Enables CORS (Cross-Origin Resource Sharing)
+UseExceptionHandler	Handles unhandled exceptions globally
+UseStatusCodePages	Returns responses for HTTP error status codes
+UseResponseCompression	Compresses response bodies (gzip, etc.)
+UseSession	Enables session state
+UseWebSockets	Supports WebSocket connections
+
+2. Custom Middleware
+Middleware that you write for custom processing.
+
+Example Use Cases:
+Logging request/response info
+
+Custom header injection
+
+Timing performance
+
+Global error handling
+
+Multi-tenant processing
+
+csharp
+Copy
+Edit
+public class CustomMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public CustomMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        // Before next middleware
+        Console.WriteLine("Handling request");
+
+        await _next(context);
+
+        // After next middleware
+        Console.WriteLine("Handling response");
+    }
+}
+3. Third-Party Middleware
+Many libraries provide reusable middleware, for example:
+
+Library	Middleware Function
+Serilog / NLog	Request logging
+Swashbuckle (Swagger)	API docs middleware
+IdentityServer	Authentication/token issuance
+SignalR	Real-time WebSocket communication
+Polly	Resilience/retry middleware
+
+🧱 By Implementation Style
+Style	Description
+Class-based	Standard, reusable (e.g. LoggingMiddleware)
+Inline/anonymous	Simple, quick use with lambda
+
+Inline Example:
+
+csharp
+Copy
+Edit
+app.Use(async (context, next) =>
+{
+    Console.WriteLine("Before");
+    await next();
+    Console.WriteLine("After");
+});
+🔁 Execution Order
+Middleware is executed in the order you register it, so correct placement is key.
+
+csharp
+Copy
+Edit
+app.UseExceptionHandler();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+a namespace is a way to organize code and avoid naming conflicts by grouping related classes, interfaces, structs, enums, and delegates.
+
+✅ Why Use Namespaces?
+Avoid naming collisions when different libraries use the same class names.
+
+Organize code logically (like folders for classes).
+
+Make large projects easier to manage.
+
+In C#, the using keyword has two main purposes, and both are very important in writing clean, efficient, and readable code:
+
+✅ 1. using Directive — Import Namespaces
+Used at the top of a file to import classes, interfaces, and other types from a namespace.
+
+🔹 Syntax:
+csharp
+Copy
+Edit
+using System;
+using System.Collections.Generic;
+🔹 Purpose:
+Avoids having to write fully qualified names like System.Console.WriteLine.
+
+Makes code cleaner and easier to read.
+
+🧠 Example:
+csharp
+Copy
+Edit
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        Console.WriteLine("Hello World"); // no need to write System.Console
+    }
+}
+✅ 2. using Statement — Auto-Dispose Objects (Resource Management)
+Used to ensure that disposable objects are cleaned up automatically (e.g., files, streams, database connections).
+
+🔹 Syntax (Classic Style):
+csharp
+Copy
+Edit
+using (var file = new StreamWriter("file.txt"))
+{
+    file.WriteLine("Hello");
+}
+// file is automatically closed and disposed here
+🔹 C# 8+ Syntax (Using Declaration):
+csharp
+Copy
+Edit
+using var file = new StreamWriter("file.txt");
+file.WriteLine("Hello");
+// file disposed automatically at the end of the scope
+🔹 Purpose:
+Ensures the object’s Dispose() method is called even if an exception occurs.
+
+Prevents memory leaks or locked resources.
+
+✅ Works With Classes That Implement:
+csharp
+Copy
+Edit
+public interface IDisposable
+{
+    void Dispose();
+}
+Examples: FileStream, StreamReader, SqlConnection, HttpClient (sometimes), etc.
+
+🧠 Summary Table
+Purpose	Example	Description
+Namespace import	using System;	Avoid writing full type names
+Resource cleanup	using (var x = ...)	Auto-dispose IDisposable objects
+Scoped resource cleanup	using var x = ...;	C# 8+ shorthand for resource disposal
+
+
+
+abstract vs virtual – Key Differences
+Feature	abstract	virtual
+Method definition	No implementation in base class	Has default implementation in base class
+Override requirement	Must be overridden in derived class	Can be overridden (optional)
+Class requirement	Declared inside an abstract class	Declared inside any non-static class
+Can be called directly?	❌ Not from abstract class	✅ Can be called if not overridden
+Purpose	Enforce implementation	Allow customization
+
+✅ Example: abstract
+csharp
+Copy
+Edit
+public abstract class Animal
+{
+    public abstract void MakeSound();  // No implementation
+}
+
+public class Dog : Animal
+{
+    public override void MakeSound()
+    {
+        Console.WriteLine("Woof!");
+    }
+}
+🧠 You must override MakeSound() in Dog, or you'll get a compile error.
+
+✅ Example: virtual
+csharp
+Copy
+Edit
+public class Animal
+{
+    public virtual void MakeSound()
+    {
+        Console.WriteLine("Some generic sound");
+    }
+}
+
+public class Dog : Animal
+{
+    public override void MakeSound()
+    {
+        Console.WriteLine("Woof!");
+    }
+}
+🧠 You can override MakeSound() in Dog, but if you don’t, it uses the base implementation.
+
+🧠 When to Use Each
+Use abstract when:	Use virtual when:
+You want to force all subclasses to implement a method	You want to provide a default behavior that can be overridden
+There's no meaningful base implementation	There is a common default behavior
+You're designing a base class hierarchy	You're adding optional extensibility
+
+🧪 Can They Be Combined?
+You cannot combine abstract and virtual on the same method, but both can exist in the same class — e.g., an abstract method and a virtual method in the same abstract class.
+
+
+To declare Dependency Injection (DI) globally in an ASP.NET Core application, you register your services in the built-in IoC container during application startup — usually in the Program.cs or Startup.cs file. This makes the dependencies available throughout the app wherever they're injected.
+
+How to Register Services Globally in ASP.NET Core
+1. Register your services in the Service Collection
+This is typically done in the Program.cs (ASP.NET Core 6+) or Startup.cs (ConfigureServices method) for earlier versions.
+
+csharp
+Copy
+Edit
+// Program.cs in ASP.NET Core 6+
+var builder = WebApplication.CreateBuilder(args);
+
+// Register services here
+builder.Services.AddScoped<IMyService, MyService>();      // Scoped lifetime
+builder.Services.AddSingleton<ILoggingService, Logger>();  // Singleton lifetime
+builder.Services.AddTransient<IEmailSender, EmailSender>(); // Transient lifetime
+
+var app = builder.Build();
+2. Inject the service wherever needed (e.g., controllers, other services)
+csharp
+Copy
+Edit
+public class HomeController : Controller
+{
+    private readonly IMyService _myService;
+
+    public HomeController(IMyService myService)
+    {
+        _myService = myService;
+    }
+
+    public IActionResult Index()
+    {
+        _myService.DoSomething();
+        return View();
+    }
+}
+Service Lifetimes
+Lifetime	Description	When to Use
+Singleton	One instance for the whole app lifetime	Logging, caching, configuration
+Scoped		One instance per HTTP request	DB contexts, business services
+Transient	New instance every injection	Lightweight stateless services
+
+Summary Steps
+Register all your services once globally in builder.Services (or ConfigureServices).
+
+Inject those services into constructors wherever needed.
+
+ASP.NET Core’s DI container will automatically resolve and provide instances.
+
+Bonus: Registering Controllers with DI
+Controllers are registered automatically when you call:
+
+csharp
+Copy
+Edit
+builder.Services.AddControllers();
+
+
+In C#, an anonymous function is a function without a name that you can define inline, typically used to create delegates or lambda expressions for short, concise code blocks.
+
+Types of Anonymous Functions in C#
+1. Anonymous Methods (Introduced in C# 2.0)
+Uses the delegate keyword without a method name.
+
+Useful when you want to create a delegate inline.
+
+csharp
+Copy
+Edit
+Func<int, int> square = delegate (int x)
+{
+    return x * x;
+};
+
+Console.WriteLine(square(5)); // Output: 25
+2. Lambda Expressions (Introduced in C# 3.0) — More Common Today
+Shorter syntax.
+
+Use => operator.
+
+Can be expression-bodied or block-bodied.
+
+Expression-bodied lambda
+csharp
+Copy
+Edit
+Func<int, int> square = x => x * x;
+Console.WriteLine(square(5)); // Output: 25
+Block-bodied lambda
+csharp
+Copy
+Edit
+Func<int, int> square = x =>
+{
+    int result = x * x;
+    return result;
+};
+Common Uses of Anonymous Functions
+Event handlers
+
+LINQ queries
+
+Delegates/callbacks
+
+Passing small functions inline
+
+Example: Using Lambda with LINQ
+csharp
+Copy
+Edit
+var numbers = new List<int> { 1, 2, 3, 4, 5 };
+var evenNumbers = numbers.Where(n => n % 2 == 0);
+
+foreach (var num in evenNumbers)
+{
+    Console.WriteLine(num); // Outputs 2 and 4
+}
+
+What is a Deadlock?
+A deadlock occurs when two or more transactions are waiting indefinitely for resources locked by each other, creating a cycle of dependencies that blocks all involved transactions.
+
+How Deadlocks Are Promoted (Caused) in SQL
+Typical Scenario:
+Transaction A locks Resource 1 and waits to lock Resource 2.
+
+Transaction B locks Resource 2 and waits to lock Resource 1.
+
+Neither can proceed, causing a deadlock.
+
+Common Causes That Promote Deadlocks:
+Concurrent transactions accessing the same set of resources but in different order
+
+Long-running transactions holding locks for too long
+
+Lack of proper indexing causing table scans and excessive locking
+
+Using higher isolation levels (e.g., Serializable) that escalate locking
+
+Lock escalation (row locks escalated to page/table locks)
+
+User interaction or delays inside transactions
+
+How to Prevent Deadlocks
+Technique	Description
+Access objects in the same order	Standardize the order of operations in all transactions
+Keep transactions short and fast	Commit/rollback quickly to release locks
+Use lower isolation levels when possible	E.g., Read Committed instead of Serializable
+Implement retry logic in your application	Catch deadlock errors and retry the transaction
+Add appropriate indexes	To avoid scans and reduce locking
+Use row versioning-based isolation (e.g., SNAPSHOT)	Avoids locking reads
+Avoid user interaction inside transactions	Prevents transactions from being open too long
+
+Example: Avoid Deadlock by Consistent Lock Ordering
+sql
+Copy
+Edit
+BEGIN TRANSACTION;
+
+-- Always update table1 before table2 in all transactions
+UPDATE table1 SET col = 1 WHERE id = 10;
+UPDATE table2 SET col = 2 WHERE id = 20;
+
+COMMIT TRANSACTION;
+Detecting Deadlocks
+SQL Server logs deadlocks in the error log.
+
+Use SQL Server Profiler or Extended Events to capture deadlock graphs.
+
+The deadlock graph shows which processes/resources are involved.
+
+
+Instance Constructor
+
+Purpose: Initializes a specific instance of a class when an object is created
+Invocation: Called every time you create a new object using new
+Parameters: Can accept parameters to customize object initialization
+Access modifiers: Can be public, private, protected, etc.
+Inheritance: Can be inherited and overridden in derived classes
+Multiple constructors: You can have multiple instance constructors (overloading)
+
+public class Person
+{
+    public string Name { get; set; }
+    
+    // Instance constructor
+    public Person(string name)
+    {
+        Name = name;
+        Console.WriteLine($"Instance constructor called for {name}");
+    }
+}
+
+var person1 = new Person("Alice"); // Constructor called
+var person2 = new Person("Bob");   // Constructor called again
+
+
+Static Constructor
+
+Purpose: Initializes static members of a class or performs one-time setup
+Invocation: Called automatically once before the first instance is created or any static members are accessed
+Parameters: Cannot accept parameters
+Access modifiers: Cannot have access modifiers (implicitly private)
+Inheritance: Cannot be inherited or called directly
+Single constructor: Only one static constructor per class is allowed
+
+public class DatabaseConnection
+{
+    public static string ConnectionString { get; private set; }
+    
+    // Static constructor
+    static DatabaseConnection()
+    {
+        ConnectionString = "Server=localhost;Database=MyApp";
+        Console.WriteLine("Static constructor called - initializing connection");
+    }
+    
+    // Instance constructor
+    public DatabaseConnection()
+    {
+        Console.WriteLine("Instance constructor called");
+    }
+}
+
+// Static constructor runs before first use
+var conn1 = new DatabaseConnection(); // Static constructor runs first, then instance
+var conn2 = new DatabaseConnection(); // Only instance constructor runs
+
+
+The SOLID principles are five design principles that make software designs more understandable, flexible, and maintainable. Here's each principle with practical examples:
+1. Single Responsibility Principle (SRP)
+"A class should have only one reason to change"
+Each class should have only one job or responsibility.
+❌ Violating SRP:
+csharppublic class User
+{
+    public string Name { get; set; }
+    public string Email { get; set; }
+    
+    // Multiple responsibilities in one class
+    public void SaveToDatabase()
+    {
+        // Database logic
+        Console.WriteLine("Saving user to database");
+    }
+    
+    public void SendEmail()
+    {
+        // Email logic
+        Console.WriteLine("Sending email to user");
+    }
+    
+    public string GenerateReport()
+    {
+        // Report generation logic
+        return $"User Report: {Name}";
+    }
+}
+✅ Following SRP:
+csharppublic class User
+{
+    public string Name { get; set; }
+    public string Email { get; set; }
+}
+
+public class UserRepository
+{
+    public void Save(User user)
+    {
+        Console.WriteLine("Saving user to database");
+    }
+}
+
+public class EmailService
+{
+    public void SendEmail(User user)
+    {
+        Console.WriteLine($"Sending email to {user.Email}");
+    }
+}
+
+public class UserReportGenerator
+{
+    public string GenerateReport(User user)
+    {
+        return $"User Report: {user.Name}";
+    }
+}
+2. Open/Closed Principle (OCP)
+"Software entities should be open for extension but closed for modification"
+You should be able to extend behavior without modifying existing code.
+❌ Violating OCP:
+csharppublic class PaymentProcessor
+{
+    public void ProcessPayment(string paymentType, decimal amount)
+    {
+        if (paymentType == "CreditCard")
+        {
+            Console.WriteLine($"Processing credit card payment: ${amount}");
+        }
+        else if (paymentType == "PayPal")
+        {
+            Console.WriteLine($"Processing PayPal payment: ${amount}");
+        }
+        // Adding new payment method requires modifying this class
+    }
+}
+✅ Following OCP:
+csharppublic abstract class PaymentMethod
+{
+    public abstract void ProcessPayment(decimal amount);
+}
+
+public class CreditCardPayment : PaymentMethod
+{
+    public override void ProcessPayment(decimal amount)
+    {
+        Console.WriteLine($"Processing credit card payment: ${amount}");
+    }
+}
+
+public class PayPalPayment : PaymentMethod
+{
+    public override void ProcessPayment(decimal amount)
+    {
+        Console.WriteLine($"Processing PayPal payment: ${amount}");
+    }
+}
+
+public class PaymentProcessor
+{
+    public void ProcessPayment(PaymentMethod paymentMethod, decimal amount)
+    {
+        paymentMethod.ProcessPayment(amount);
+    }
+}
+
+// Adding new payment method doesn't require modifying existing code
+public class ApplePayPayment : PaymentMethod
+{
+    public override void ProcessPayment(decimal amount)
+    {
+        Console.WriteLine($"Processing Apple Pay payment: ${amount}");
+    }
+}
+3. Liskov Substitution Principle (LSP)
+"Objects of a superclass should be replaceable with objects of its subclasses without breaking functionality"
+❌ Violating LSP:
+csharppublic class Bird
+{
+    public virtual void Fly()
+    {
+        Console.WriteLine("Flying...");
+    }
+}
+
+public class Penguin : Bird
+{
+    public override void Fly()
+    {
+        throw new NotSupportedException("Penguins can't fly!");
+        // This breaks the contract - substituting Bird with Penguin breaks the app
+    }
+}
+✅ Following LSP:
+csharppublic abstract class Bird
+{
+    public abstract void Move();
+}
+
+public class FlyingBird : Bird
+{
+    public override void Move()
+    {
+        Fly();
+    }
+    
+    protected virtual void Fly()
+    {
+        Console.WriteLine("Flying...");
+    }
+}
+
+public class FlightlessBird : Bird
+{
+    public override void Move()
+    {
+        Walk();
+    }
+    
+    protected virtual void Walk()
+    {
+        Console.WriteLine("Walking...");
+    }
+}
+
+public class Eagle : FlyingBird
+{
+    protected override void Fly()
+    {
+        Console.WriteLine("Soaring high...");
+    }
+}
+
+public class Penguin : FlightlessBird
+{
+    protected override void Walk()
+    {
+        Console.WriteLine("Waddling...");
+    }
+}
+4. Interface Segregation Principle (ISP)
+"Many client-specific interfaces are better than one general-purpose interface"
+Don't force classes to implement interfaces they don't use.
+❌ Violating ISP:
+csharppublic interface IWorker
+{
+    void Work();
+    void Eat();
+    void Sleep();
+}
+
+public class Human : IWorker
+{
+    public void Work() => Console.WriteLine("Working...");
+    public void Eat() => Console.WriteLine("Eating...");
+    public void Sleep() => Console.WriteLine("Sleeping...");
+}
+
+public class Robot : IWorker
+{
+    public void Work() => Console.WriteLine("Working...");
+    public void Eat() => throw new NotImplementedException(); // Robots don't eat!
+    public void Sleep() => throw new NotImplementedException(); // Robots don't sleep!
+}
+✅ Following ISP:
+csharppublic interface IWorkable
+{
+    void Work();
+}
+
+public interface IEatable
+{
+    void Eat();
+}
+
+public interface ISleepable
+{
+    void Sleep();
+}
+
+public class Human : IWorkable, IEatable, ISleepable
+{
+    public void Work() => Console.WriteLine("Working...");
+    public void Eat() => Console.WriteLine("Eating...");
+    public void Sleep() => Console.WriteLine("Sleeping...");
+}
+
+public class Robot : IWorkable
+{
+    public void Work() => Console.WriteLine("Working...");
+    // Robot only implements what it needs
+}
+5. Dependency Inversion Principle (DIP)
+"Depend on abstractions, not concretions"
+High-level modules should not depend on low-level modules. Both should depend on abstractions.
+❌ Violating DIP:
+csharppublic class EmailService
+{
+    public void SendEmail(string message)
+    {
+        Console.WriteLine($"Sending email: {message}");
+    }
+}
+
+public class NotificationService
+{
+    private EmailService emailService; // Directly depends on concrete class
+    
+    public NotificationService()
+    {
+        emailService = new EmailService(); // Tight coupling
+    }
+    
+    public void SendNotification(string message)
+    {
+        emailService.SendEmail(message);
+    }
+}
+✅ Following DIP:
+csharppublic interface INotificationService
+{
+    void SendNotification(string message);
+}
+
+public class EmailService : INotificationService
+{
+    public void SendNotification(string message)
+    {
+        Console.WriteLine($"Sending email: {message}");
+    }
+}
+
+public class SMSService : INotificationService
+{
+    public void SendNotification(string message)
+    {
+        Console.WriteLine($"Sending SMS: {message}");
+    }
+}
+
+public class NotificationManager
+{
+    private readonly INotificationService notificationService;
+    
+    public NotificationManager(INotificationService notificationService)
+    {
+        this.notificationService = notificationService; // Depends on abstraction
+    }
+    
+    public void SendNotification(string message)
+    {
+        notificationService.SendNotification(message);
+    }
+}
+
+// Usage with dependency injection
+var emailService = new EmailService();
+var notificationManager = new NotificationManager(emailService);
+notificationManager.SendNotification("Hello World!");
+Benefits of Following SOLID Principles
+Following SOLID principles leads to:
+
+Maintainable code: Easier to modify and extend
+Testable code: Dependencies can be mocked easily
+Flexible architecture: Easy to add new features
+Reduced coupling: Components are less dependent on each other
+Better code organization: Clear separation of concerns
+
+
+
+IEnumerable<T>
+
+Namespace: System.Collections.Generic
+Execution: In-memory, on the client side
+Query execution: Immediate execution (LINQ to Objects)
+Expression trees: No - uses delegates/functions
+Best for: Working with in-memory collections
+
+csharpusing System;
+using System.Collections.Generic;
+using System.Linq;
+
+// IEnumerable example
+List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+IEnumerable<int> evenNumbers = numbers.Where(x => x % 2 == 0);
+
+// Query executes immediately in memory
+foreach (int num in evenNumbers)
+{
+    Console.WriteLine(num); // 2, 4, 6, 8, 10
+}
+
+
+IQueryable<T>
+
+Namespace: System.Linq
+Execution: Can be translated to different query languages (SQL, etc.)
+Query execution: Deferred execution with expression trees
+Expression trees: Yes - builds expression trees for translation
+Best for: Working with databases and remote data sources
+
+csharpusing System;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+
+// IQueryable example (Entity Framework)
+using var context = new MyDbContext();
+IQueryable<User> activeUsers = context.Users.Where(u => u.IsActive);
+
+// Query is translated to SQL and executed on database
+var userList = activeUsers.ToList();
+
+
+When to Use Which
+Use IEnumerable when:
+
+Working with in-memory collections (List, Array, etc.)
+Data is already loaded into memory
+Simple LINQ operations on small datasets
+You don't need query translation
+
+Use IQueryable when:
+
+Working with databases (Entity Framework, LINQ to SQL)
+Working with remote data sources
+Need query optimization and translation
+Building dynamic queries
+Working with large datasets where filtering should happen at the source
+
+
+ref, out, and in are parameter modifiers in C# that control how arguments are passed to methods. Each serves a different purpose:
+ref - Reference Parameter
+
+Purpose: Pass a variable by reference (both input and output)
+Initialization: Variable must be initialized before passing
+Assignment: Method can read and modify the value
+Return requirement: Method is not required to assign a new value
+
+csharppublic void ModifyValue(ref int number)
+{
+    Console.WriteLine($"Original value: {number}"); // Can read
+    number = number * 2; // Can modify
+}
+
+// Usage
+int value = 10;
+ModifyValue(ref value);
+Console.WriteLine(value); // Output: 20
+out - Output Parameter
+
+Purpose: Return multiple values from a method
+Initialization: Variable doesn't need to be initialized before passing
+Assignment: Method must assign a value before returning
+Return requirement: Method must assign a value to all out parameters
+
+csharppublic bool TryDivide(int dividend, int divisor, out int result)
+{
+    if (divisor == 0)
+    {
+        result = 0; // Must assign a value
+        return false;
+    }
+    
+    result = dividend / divisor;
+    return true;
+}
+
+// Usage - variable can be declared inline
+if (TryDivide(10, 2, out int result))
+{
+    Console.WriteLine($"Result: {result}"); // Output: Result: 5
+}
+
+// Or declared separately
+int answer;
+if (TryDivide(10, 3, out answer))
+{
+    Console.WriteLine($"Result: {answer}"); // Output: Result: 3
+}
+in - Input Parameter (C# 7.2+)
+
+Purpose: Pass large value types by reference for performance, but read-only
+Initialization: Variable must be initialized before passing
+Assignment: Method cannot modify the value (read-only reference)
+Performance: Avoids copying large structs
+
+csharppublic struct LargeStruct
+{
+    public int Value1, Value2, Value3, Value4, Value5;
+    public LargeStruct(int v1, int v2, int v3, int v4, int v5)
+    {
+        Value1 = v1; Value2 = v2; Value3 = v3; Value4 = v4; Value5 = v5;
+    }
+}
+
+public int CalculateSum(in LargeStruct data)
+{
+    // Can read but cannot modify
+    return data.Value1 + data.Value2 + data.Value3 + data.Value4 + data.Value5;
+    // data.Value1 = 100; // Compilation error!
+}
+
+// Usage
+var largeData = new LargeStruct(1, 2, 3, 4, 5);
+int sum = CalculateSum(in largeData); // Passes by reference, no copying
