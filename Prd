@@ -1,0 +1,55 @@
+Dear Candidate,
+
+Thank you for showing interest in the MERN Stack Developer role at Frontlines Media.
+
+As part of the next stage in our selection process, you have been shortlisted and we are assigning you a technical assessment to evaluate your skills. Please find the details below:
+
+Task Title: Companies API Development
+
+Objective
+To implement an API module for managing “Company” data, including filters and optional frontend rendering.
+
+Task Details
+
+1. Backend Development (Node.js + Express + MongoDB)
+
+Build RESTful APIs:To manage Data 
+
+The api should support searching by different attributes.
+
+Company Data should be stored in Mongodb Collections.
+
+2. Optional Frontend (React.js)
+
+Create a simple UI to display companies in a table or card format.
+
+
+Add filter controls (dropdowns/inputs) to fetch data using the API filters.
+
+Additional Instructions:
+Once you have completed the task, record a 2–3 minute video explaining:
+
+How you approached the task
+
+Steps followed during development
+
+Key decisions made in your implementation
+
+Ensure your explanation is clear and concise.
+
+Deadline:
+Wednesday, 13th August 2025 , 5:00 PM IST
+
+Submission:
+
+Upload your completed code/project files and the recorded video to your own Google Drive.
+
+Share the folder link with us and ensure you have given us the necessary access.
+
+Name your submission folder in the format: YourName_Task for easy identification.
+
+We look forward to reviewing your work.
+
+Best Regards,
+Harshitha
+FLM.
