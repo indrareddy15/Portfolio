@@ -1,0 +1,32 @@
+1.The pips-prosper-journal prepopulated data by Lovable and project are complex, involving a backend database (Supabase with PostgreSQL).
+2.Do we need to use the same schema as the existing one? Beacuse I am planning to use MongoDB instead.
+3.If we're switching to MongoDB, migrating the code from Supabase with PostgreSQL will take longer than expected because we'll need to review 4.the design of every table and schema. (Migration isn't an issue for me; I can handle it.)
+5.If we go with a new schema, it would be easier since we’d be building it from scratch. We'll know exactly where the gaps are, but we need to ensure the schema is optimized.
+6.I've reviewed the code so far, and I’ve identified the APIs that are required.
+7.Please confirm whether you want an exact replica of the current application with Supabase for the backend APIs.
+8.I’ve completed the authentication part with a basic, generic schema and 8 endpoints. However, the email service isn’t configured yet (I need to discuss it, as I'm currently exploring free email services).
+
+
+
+Below is a list of popular free email services (SMTP-based) you can use:
+
+| Service                       | Free Plan Includes                  | SMTP Support | Easy to Use?  | Notes                                                                      |
+| ----------------------------- | ----------------------------------- | ------------ | ------------- | -------------------------------------------------------------------------- |
+| **Ethereal**                  | Fake email service for testing only | ✅ Yes        | ✅ Super easy  | Best for local/dev testing. Emails aren't delivered to real inboxes.       |
+| **Sendinblue**                | 300 emails/day (≈9,000/month)       | ✅ Yes        | ✅ Easy        | Great for transactional emails. Requires domain setup for production.      |
+| **Mailtrap**                  | 500 emails/month (test inbox only)  | ✅ Yes        | ✅ Easy        | Emails go to fake inbox (not real users). Good for staging/testing.        |
+| **Brevo (ex-Sendinblue)**     | Same as Sendinblue                  | ✅ Yes        | ✅             | Same company as Sendinblue.                                                |
+| **Mailgun**                   | 5,000 emails for 1st month          | ✅ Yes        | ⚠️ Moderate   | Requires domain verification. Best for production.                         |
+| **Elastic Email**             | 100/day on free plan                | ✅ Yes        | ⚠️ OK         | SMTP works but UI can be confusing.                                        |
+| **SMTP2GO**                   | 1,000 emails/month                  | ✅ Yes        | ✅             | No domain required initially. Simple setup.                                |
+| **Gmail (with App Password)** | \~100–500/day unofficially          | ✅ Yes        | ⚠️ More setup | Requires Gmail + App Password (2FA) setup. Not recommended for production. |
+
+
+
+| Use Case               | Recommendation                           |
+| ---------------------- | ---------------------------------------- |
+| Local development      | ✅ **Ethereal**                           |
+| Testing in staging     | ✅ **Mailtrap**, **SMTP2GO**              |
+| Sending to real users  | ✅ **Sendinblue**, **SMTP2GO**            |
+| Light production usage | ✅ **SMTP2GO** or **Elastic Email**       |
+| Quick Gmail testing    | ✅ Gmail with App Password (not for prod) |
