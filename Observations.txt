@@ -1,0 +1,9 @@
+1).Prepopulated Data and Project is Complex
+2).Database is Supabase with PostgreSQL
+3).I'm using MongoDB
+4).Do we need use the Same Schema as existing
+5).if it's MongoDB Migration of code from Supabase with PostgreSQL will take some more time than actual time bcz we need see each and every table data design the Schema (for me Migration also no problem i can work)
+6).if we are going with new Schem that is easy because creating from the scratch will be easy we know where and which point is missing but we need to achieve optimized schema
+7).As of now i have gone through the code i found these are api that are requried
+8).and tell me you exactly want the same replica of what we have an application with Supabase in original backend API's
+10). I have completed auth part with basic and genric schema with 8 endpoints and email Service is not configured (need to disscuss with email service as of i'm trying with free services)
